@@ -4,18 +4,13 @@ const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const ExtractTextWebpackPlugin = require('extract-text-webpack-plugin')
 const vueLoaderPlugin = require("vue-loader/lib/plugin");
-const Webpack = require("webpack");
+const devMode = process.argv.indexOf('--mode=production') === -1;
 let indexLess = new ExtractTextWebpackPlugin('index.less')
 
 module.exports = {
-  mode: "development", //开发模式
-  // entry: ["@babel/polyfill", path.resolve(__dirname, "../src/main.js")], //单入口文件
 
-  devServer: {
-    port: 3000,
-    hot: true,
-    contentBase: "../dist"
-  },
+
+  // entry: ["@babel/polyfill", path.resolve(__dirname, "../src/main.js")], //单入口文件
 
   entry: {
     main: path.resolve(__dirname, "../src/main.js") //多入口文件
@@ -37,6 +32,16 @@ module.exports = {
 
   module: {
     rules: [
+      {
+        test: /\.js$/,
+        use: {
+          loader: "babel-loader",
+          options: {
+            presets: ["@babel/preset-env"]
+          }
+        },
+        exclude: /node_modules/
+      },
       {
         test: /\.vue$/,
         use: ["vue-loader"]
@@ -63,76 +68,55 @@ module.exports = {
         test: /\.(jpe?g|png|gif)$/i, //图片文件
         use: [
           {
-            test: /\.(jpe?g|png|gif)$/i, //图片文件
-            use: [
-              {
-                loader: "url-loader",
+            loader: 'url-loader',
+            options: {
+              limit: 10240,
+              fallback: {
+                loader: 'file-loader',
                 options: {
-                  limit: 10240,
-                  fallback: {
-                    loader: "file-loader",
-                    options: {
-                      name: "img/[name].[hash:8].[ext]"
-                    }
-                  }
+                    name: 'img/[name].[hash:8].[ext]'
                 }
               }
-            ]
-          },
-          {
-            test: /\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/, //媒体文件
-            use: [
-              {
-                loader: "url-loader",
-                options: {
-                  limit: 10240,
-                  fallback: {
-                    loader: "file-loader",
-                    options: {
-                      name: "media/[name].[hash:8].[ext]"
-                    }
-                  }
-                }
-              }
-            ]
-          },
-          {
-            test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/i, // 字体
-            use: [
-              {
-                loader: "url-loader",
-                options: {
-                  limit: 10240,
-                  fallback: {
-                    loader: "file-loader",
-                    options: {
-                      name: "fonts/[name].[hash:8].[ext]"
-                    }
-                  }
-                }
-              }
-            ]
+            }
           }
         ]
       },
       {
-        test: /\.js$/,
-        use: {
-          loader: "babel-loader",
-          options: {
-            presets: ["@babel/preset-env"]
+        test: /\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/, //媒体文件
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 10240,
+              fallback: {
+                loader: 'file-loader',
+                options: {
+                  name: 'media/[name].[hash:8].[ext]'
+                }
+              }
+            }
           }
-        },
-        exclude: /node_modules/
+        ]
+      },
+      {
+        test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/i, // 字体
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 10240,
+              fallback: {
+                loader: 'file-loader',
+                options: {
+                  name: 'fonts/[name].[hash:8].[ext]'
+                }
+              }
+            }
+          }
+        ]
       }
     ]
   },
-
-  //   plugins: [                                                     //单入口模板
-  //       new HtmlWebpackPlugin({
-  //           template: path.resolve(__dirname, '../public/index.html')
-  //       })
-  //   ]
 
   plugins: [
     // new HtmlWebpackPlugin({
@@ -157,11 +141,10 @@ module.exports = {
     new CleanWebpackPlugin(),
 
     new MiniCssExtractPlugin({
-      filename: "[name].[hash].css",
-      chunkFilename: "[id].css"
+      filename: devMode ? '[name].css' : '[name].[hash].css',
+      chunkFilename: devMode ? '[id].css' : '[id].[hash].css'
     }),
 
-    new Webpack.HotModuleReplacementPlugin(),
 
     new vueLoaderPlugin(),
     indexLess

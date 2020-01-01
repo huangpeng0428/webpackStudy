@@ -1,4 +1,7 @@
 import './assets/index.less'
 import Vue from 'vue'
 import App from './app'
-console.log('测试一下')
+new Vue({
+    render: h => h(App)
+}).$mount('#app')
+// console.log('测试一下')
