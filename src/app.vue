@@ -8,7 +8,7 @@
 export default {
     data() {
         return {
-            initData: 'Vue开发环境运行成功1'
+            initData: '测试Vue开发环境运行成功'
         }
     }
 }

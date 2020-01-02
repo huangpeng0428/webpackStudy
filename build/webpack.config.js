@@ -18,8 +18,9 @@ module.exports = {
   },
 
   output: {
-    filename: "[name].[hash:8].js", //打包后文件的名称
-    path: path.resolve(__dirname, "../dist") //打包后的目录
+    path: path.resolve(__dirname, "../dist"), //打包后的目录
+    filename: "js/[name].[hash:8].js", //打包后文件的名称
+    chunkFilename:'js/[name].[hash:8].js'
   },
 
   resolve:{
@@ -44,25 +45,44 @@ module.exports = {
       },
       {
         test: /\.vue$/,
-        use: ["vue-loader"]
+        use:[{
+          loader:'vue-loader',
+          options:{
+            compilerOptions:{
+              preserveWhitespace:false
+            }
+          }
+        }]
       },
       {
         test: /\.css$/,
-        use: ["style-loader", "css-loader"] // 从右向左解析原则
+        use:[{
+          loader: devMode ? 'vue-style-loader' : MiniCssExtractPlugin.loader,
+          options:{
+            publicPath:"../dist/css/",
+            hmr:devMode
+          }
+        },'css-loader',{
+          loader:'postcss-loader',
+          options:{
+            plugins:[require('autoprefixer')]
+          }
+        }]
       },
       {
         test: /\.less$/,
-        use: [
-          "vue-style-loader",
-          "css-loader",
-          {
-            loader: "postcss-loader",
-            options: {
-              plugins: [require("autoprefixer")]
-            }
-          },
-          "less-loader"
-        ]
+        use:[{
+          loader:devMode ? 'vue-style-loader' : MiniCssExtractPlugin.loader,
+          options:{
+            publicPath:"../dist/css/",
+            hmr:devMode
+          }
+        },'css-loader','less-loader',{
+          loader:'postcss-loader',
+          options:{
+            plugins:[require('autoprefixer')]
+          }
+        }]
       },
       {
         test: /\.(jpe?g|png|gif)$/i, //图片文件

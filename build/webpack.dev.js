@@ -7,7 +7,7 @@ module.exports = WebpackMerge(webpackConfig, {
     devtool:'cheap-module-eval-source-map',
 
     devServer: {
-      port: 8082,
+      port: 8080,
       hot: true,
       contentBase: "../dist"
     },
