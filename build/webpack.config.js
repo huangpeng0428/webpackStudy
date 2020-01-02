@@ -45,14 +45,14 @@ module.exports = {
       },
       {
         test: /\.vue$/,
-        use:[{
           loader:'vue-loader',
+          include: [path.resolve(__dirname, '../src')],
+          exclude:/node_modules/,
           options:{
             compilerOptions:{
               preserveWhitespace:false
             }
           }
-        }]
       },
       {
         test: /\.css$/,
