@@ -2,14 +2,14 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const { CleanWebpackPlugin } = require("clean-webpack-plugin"); 
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const ExtractTextWebpackPlugin = require('extract-text-webpack-plugin')
+const ExtractTextWebpackPlugin = require('extract-text-webpack-plugin');
 const vueLoaderPlugin = require("vue-loader/lib/plugin");
+const webpack = require("webpack");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 const devMode = process.argv.indexOf('--mode=production') === -1;
 let indexLess = new ExtractTextWebpackPlugin('index.less')
 
 module.exports = {
-
-
   // entry: ["@babel/polyfill", path.resolve(__dirname, "../src/main.js")], //单入口文件
 
   entry: {
@@ -20,16 +20,23 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, "../dist"), //打包后的目录
     filename: "js/[name].[hash:8].js", //打包后文件的名称
-    chunkFilename:'js/[name].[hash:8].js'
+    chunkFilename: "js/[name].[hash:8].js"
   },
 
-  resolve:{
-      alias:{
-        'vue$':'vue/dist/vue.runtime.esm.js',
-        ' @':path.resolve(__dirname,'../src')
-      },
-      extensions:['*','.js','.json','.vue']
+  resolve: {
+    alias: {
+      vue$: "vue/dist/vue.runtime.esm.js",
+      " @": path.resolve(__dirname, "../src"),
+      assets: path.resolve("src/assets"),
+      componets: path.resolve("src/componets")
     },
+    extensions: ["*", ".js", ".json", ".vue"]
+  },
+
+  performance: {
+    hints:false
+  },
+
 
   module: {
     rules: [
@@ -45,56 +52,65 @@ module.exports = {
       },
       {
         test: /\.vue$/,
-          loader:'vue-loader',
-          include: [path.resolve(__dirname, '../src')],
-          exclude:/node_modules/,
-          options:{
-            compilerOptions:{
-              preserveWhitespace:false
-            }
+        loader: "vue-loader",
+        include: [path.resolve(__dirname, "../src")],
+        exclude: /node_modules/,
+        options: {
+          compilerOptions: {
+            preserveWhitespace: false
           }
+        }
       },
       {
         test: /\.css$/,
-        use:[{
-          loader: devMode ? 'vue-style-loader' : MiniCssExtractPlugin.loader,
-          options:{
-            publicPath:"../dist/css/",
-            hmr:devMode
+        use: [
+          {
+            loader: devMode ? "vue-style-loader" : MiniCssExtractPlugin.loader,
+            options: {
+              publicPath: "../dist/css/",
+              hmr: devMode
+            }
+          },
+          "css-loader",
+          {
+            loader: "postcss-loader",
+            options: {
+              plugins: [require("autoprefixer")]
+            }
           }
-        },'css-loader',{
-          loader:'postcss-loader',
-          options:{
-            plugins:[require('autoprefixer')]
-          }
-        }]
+        ]
       },
       {
         test: /\.less$/,
-        use:[{
-          loader:devMode ? 'vue-style-loader' : MiniCssExtractPlugin.loader,
-          options:{
-            publicPath:"../dist/css/",
-            hmr:devMode
+        use: [
+          {
+            loader: devMode ? "vue-style-loader" : MiniCssExtractPlugin.loader,
+            options: {
+              publicPath: "../dist/css/",
+              hmr: devMode
+            }
+          },
+          "css-loader",
+          "less-loader",
+          {
+            loader: "postcss-loader",
+            options: {
+              plugins: [require("autoprefixer")]
+            }
           }
-        },'css-loader','less-loader',{
-          loader:'postcss-loader',
-          options:{
-            plugins:[require('autoprefixer')]
-          }
-        }]
+        ]
       },
       {
         test: /\.(jpe?g|png|gif)$/i, //图片文件
         use: [
           {
-            loader: 'url-loader',
+            loader: "url-loader",
             options: {
               limit: 10240,
               fallback: {
-                loader: 'file-loader',
+                loader: "file-loader",
                 options: {
-                    name: 'img/[name].[hash:8].[ext]'
+                  name: "img/[name].[hash:8].[ext]"
                 }
               }
             }
@@ -105,13 +121,13 @@ module.exports = {
         test: /\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/, //媒体文件
         use: [
           {
-            loader: 'url-loader',
+            loader: "url-loader",
             options: {
               limit: 10240,
               fallback: {
-                loader: 'file-loader',
+                loader: "file-loader",
                 options: {
-                  name: 'media/[name].[hash:8].[ext]'
+                  name: "media/[name].[hash:8].[ext]"
                 }
               }
             }
@@ -122,13 +138,13 @@ module.exports = {
         test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/i, // 字体
         use: [
           {
-            loader: 'url-loader',
+            loader: "url-loader",
             options: {
               limit: 10240,
               fallback: {
-                loader: 'file-loader',
+                loader: "file-loader",
                 options: {
-                  name: 'fonts/[name].[hash:8].[ext]'
+                  name: "fonts/[name].[hash:8].[ext]"
                 }
               }
             }
@@ -161,12 +177,24 @@ module.exports = {
     new CleanWebpackPlugin(),
 
     new MiniCssExtractPlugin({
-      filename: devMode ? '[name].css' : '[name].[hash].css',
-      chunkFilename: devMode ? '[id].css' : '[id].[hash].css'
+      filename: devMode ? "[name].css" : "[name].[hash].css",
+      chunkFilename: devMode ? "[id].css" : "[id].[hash].css"
     }),
 
+    new CopyWebpackPlugin([
+      // 拷贝生成的文件到dist目录 这样每次不必手动去cv
+      {
+        from: path.join(__dirname, "static"),
+        to: path.join(__dirname, "../dist/static"),
+        ignore: [".*"]
+      }
+    ]),
 
     new vueLoaderPlugin(),
-    indexLess
+    indexLess,
+    new webpack.DllReferencePlugin({
+      context: __dirname,
+      manifest: require("./vendor-mainfest.json")
+    })
   ]
 };
